@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poștașul digital — laborator de e-mail</title>
+<style>
+:root { color-scheme: light dark; --ink: light-dark(#17283d,#eef4fb); --muted: light-dark(#607086,#a8b7c9); --paper: light-dark(#ffffff,#182536); --canvas: light-dark(#f2f6fb,#101a28); --line: light-dark(#dce5ef,#344356); --blue: light-dark(#285d91,#83baff); --blue-strong: light-dark(#244a72,#244a72); --soft: light-dark(#eaf2fb,#22354a); --green: light-dark(#18794e,#74d5a6); --red: light-dark(#b83b46,#ff939a); --amber: light-dark(#956116,#ffd27b); }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--canvas); color: var(--ink); }
+.app { min-height: 100vh; background: var(--canvas); }
+.topbar { background: var(--blue-strong); color: white; padding: 22px max(20px, calc((100% - 1100px)/2)); }
+.brand { display:flex; align-items:center; gap:12px; font-weight:800; font-size:1.25rem; letter-spacing:-.02em; }
+.brand-icon { width:42px; height:42px; display:grid; place-items:center; border-radius:14px; background:#ffffff24; font-size:1.4rem; }
+.topbar p { margin:10px 0 0; color:#e0ebf8; max-width:680px; line-height:1.5; }
+main { max-width:1100px; margin:0 auto; padding:28px 20px 48px; }
+.intro { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:22px; }
+.eyebrow { color:var(--blue); font-weight:800; text-transform:uppercase; font-size:.75rem; letter-spacing:.12em; }
+h1 { font-size:clamp(1.7rem,4vw,2.5rem); line-height:1.1; letter-spacing:-.04em; margin:8px 0; }
+.intro p { margin:0; color:var(--muted); max-width:650px; line-height:1.55; }
+.pill { white-space:nowrap; border:1px solid var(--line); border-radius:999px; padding:9px 13px; color:var(--muted); font-size:.85rem; }
+.layout { display:grid; grid-template-columns:280px minmax(0,1fr); gap:20px; align-items:start; }
+.panel { background:var(--paper); border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+.panel-head { padding:18px 18px 14px; border-bottom:1px solid var(--line); }
+.panel-head h2 { font-size:1rem; margin:0 0 5px; }
+.panel-head p { margin:0; color:var(--muted); font-size:.86rem; line-height:1.45; }
+.missions { padding:10px; display:grid; gap:8px; }
+.mission { width:100%; text-align:left; border:1px solid transparent; background:transparent; color:var(--ink); border-radius:13px; padding:13px; cursor:pointer; display:flex; gap:11px; align-items:flex-start; }
+.mission:hover { background:var(--canvas); }
+.mission.active { background:var(--soft); border-color:var(--blue); }
+.mission-num { flex:0 0 32px; height:32px; display:grid; place-items:center; border-radius:10px; background:var(--canvas); font-weight:800; color:var(--blue); }
+.mission.active .mission-num { background:var(--blue-strong); color:white; }
+.mission strong { display:block; font-size:.91rem; margin:1px 0 4px; }
+.mission small { color:var(--muted); line-height:1.4; display:block; }
+.tag { display:inline-block; margin-top:7px; font-size:.69rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; color:var(--muted); }
+.editor { padding:22px; }
+.task-banner { background:var(--soft); border:1px solid var(--line); border-radius:15px; padding:17px; display:flex; gap:13px; align-items:flex-start; margin-bottom:22px; }
+.task-icon { width:42px; height:42px; flex:0 0 42px; display:grid; place-items:center; border-radius:12px; background:var(--paper); font-size:1.25rem; }
+.task-banner h2 { font-size:1.05rem; margin:0 0 5px; }
+.task-banner p { margin:0; line-height:1.55; }
+.task-hint { color:var(--muted); font-size:.86rem; margin-top:8px !important; }
+.field { margin:16px 0; }
+label { display:block; font-weight:750; font-size:.9rem; margin-bottom:7px; }
+input, textarea { width:100%; border:1px solid var(--line); background:var(--canvas); color:var(--ink); padding:12px 13px; border-radius:11px; font:inherit; outline:none; }
+input:focus, textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px color-mix(in srgb, var(--blue) 20%, transparent); }
+textarea { resize:vertical; min-height:185px; line-height:1.55; }
+.field-help { color:var(--muted); font-size:.78rem; margin-top:6px; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+button.action { border:0; border-radius:11px; padding:12px 16px; font:inherit; font-weight:800; cursor:pointer; }
+.primary { background:var(--blue-strong); color:white; }
+.secondary { border:1px solid var(--line) !important; background:var(--paper); color:var(--ink); }
+.primary:hover { filter:brightness(1.12); }
+.secondary:hover { background:var(--canvas); }
+.feedback { display:none; margin-top:22px; border:1px solid var(--line); border-radius:15px; padding:18px; }
+.feedback.show { display:block; }
+.feedback-top { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:14px; }
+.feedback h3 { margin:0; font-size:1.05rem; }
+.score { font-size:.88rem; font-weight:850; border-radius:999px; background:var(--soft); padding:8px 11px; white-space:nowrap; }
+.progress { height:8px; background:var(--canvas); border-radius:999px; overflow:hidden; margin-bottom:16px; }
+.progress > div { height:100%; width:0; background:var(--green); transition:width .2s ease; }
+.checks { display:grid; gap:10px; }
+.check { display:flex; gap:10px; align-items:flex-start; line-height:1.45; }
+.check-icon { font-weight:900; width:22px; flex:0 0 22px; }
+.check.ok .check-icon { color:var(--green); }
+.check.no .check-icon { color:var(--red); }
+.check span:last-child { font-size:.9rem; }
+.feedback-note { margin-top:14px; padding:12px; border-radius:11px; background:var(--canvas); color:var(--muted); line-height:1.5; font-size:.87rem; }
+.lesson { margin-bottom:22px; padding:22px; background:var(--paper); border:1px solid var(--line); border-radius:20px; line-height:1.6; }
+.lesson h2 {margin:0 0 9px;font-size:1.3rem;} .lesson h3 {margin:16px 0 6px;font-size:1rem;} .lesson p {margin:8px 0;} .lesson ul {margin:6px 0 0;padding-left:23px;} .lesson-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px;margin-top:12px;} .lesson-tile {background:var(--canvas);border:1px solid var(--line);border-radius:12px;padding:12px;} .lesson-tile strong {display:block;margin-bottom:4px;} .lesson-note {color:var(--muted);font-size:.88rem;}
+.footer-note { color:var(--muted); font-size:.82rem; margin-top:20px; line-height:1.5; }
+.toast { margin-top:10px; font-size:.83rem; color:var(--green); display:none; }
+@media (max-width:760px) { .intro { align-items:flex-start; flex-direction:column; } .layout { grid-template-columns:1fr; } .missions { grid-template-columns:1fr; } .editor { padding:16px; } .topbar { padding:18px 20px; } }
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <div class="brand"><div class="brand-icon" aria-hidden="true">✉</div><span>Poștașul digital</span></div>
+  <p>Un laborator de e-mail pentru clasa a VI-a. Exersează, verifică și îmbunătățește mesajele tale — fără să trimiți nimic pe internet.</p>
+</header>
+<main>
+  <div class="intro">
+    <div><div class="eyebrow">Misiune digitală</div><h1>Scrie un e-mail ca un profesionist</h1><p>Alege o misiune din stânga, completează câmpurile și apasă „Verifică e-mailul”. Primești feedback imediat.</p></div>
+    <div class="pill">🛡️ Simulator sigur · Fără cont</div>
+  </div>
+  <section class="lesson" aria-labelledby="lessonTitle">
+    <div class="eyebrow">Înainte să începi · Mini-lecție</div>
+    <h2 id="lessonTitle">Ce este e-mailul?</h2>
+    <p><strong>E-mailul (poșta electronică)</strong> este un serviciu prin care putem trimite și primi mesaje prin internet. Un mesaj poate conține text și, uneori, fișiere atașate. Pentru comunicarea la școală folosim un limbaj clar, respectuos și îngrijit.</p>
+    <h3>Componentele unui e-mail</h3>
+    <div class="lesson-grid">
+      <div class="lesson-tile"><strong>📮 Către (destinatar)</strong>Adresa persoanei căreia îi scriem, de exemplu profesor@exemplu.ro.</div>
+      <div class="lesson-tile"><strong>🏷️ Subiect</strong>Un titlu scurt care arată motivul mesajului.</div>
+      <div class="lesson-tile"><strong>✍️ Corpul mesajului</strong>Salutul, informația sau solicitarea formulată clar, încheierea politicoasă și semnătura.</div>
+      <div class="lesson-tile"><strong>📎 Atașament</strong>Un fișier adăugat mesajului, de exemplu un proiect sau o fotografie.</div>
+    </div>
+    <h3>Ce găsim într-o aplicație de e-mail?</h3>
+    <p><strong>Mesaje primite</strong> afișează corespondența primită, <strong>Trimise</strong> păstrează mesajele expediate, <strong>Mesaje nefinalizate</strong> conține ciornele, iar <strong>Cu stea</strong> marchează mesajele importante. <strong>Bara de căutare</strong> ne ajută să găsim un mesaj, <strong>etichetele</strong> îl organizează, iar butonul de <strong>reîmprospătare</strong> actualizează lista.</p>
+    <p class="lesson-note">În Gmail mai există categorii pentru mesaje, setări ale aplicației, acces la alte aplicații Google și un meniu al contului. Interfața se poate modifica în timp.</p>
+    <p><strong>Regula de aur:</strong> verifică destinatarul, scrie un subiect relevant, exprimă-te politicos și recitește mesajul înainte de trimitere.</p>
+  </section>
+  <div class="layout">
+    <aside class="panel">
+      <div class="panel-head"><h2>Alege misiunea</h2><p>Fiecare provocare te ajută să exersezi o situație diferită.</p></div>
+      <div class="missions" id="missions">
+        <button class="mission active" data-mission="0"><span class="mission-num">1</span><span><strong>Cere tema</strong><small>Scrie-i profesorului un mesaj politicos.</small><span class="tag">Începător</span></span></button>
+        <button class="mission" data-mission="1"><span class="mission-num">2</span><span><strong>Invită un coleg</strong><small>Invită un coleg să lucrați la un proiect.</small><span class="tag">Începător</span></span></button>
+        <button class="mission" data-mission="2"><span class="mission-num">3</span><span><strong>Trimite o temă</strong><small>Anunță profesorul că ai terminat proiectul.</small><span class="tag">Intermediar</span></span></button>
+        <button class="mission" data-mission="3"><span class="mission-num">4</span><span><strong>Întreabă politicos</strong><small>Cere o lămurire despre o cerință.</small><span class="tag">Provocare</span></span></button>
+      </div>
+    </aside>
+    <section class="panel" aria-label="Editor de e-mail">
+      <div class="editor">
+        <div class="task-banner"><div class="task-icon" aria-hidden="true">📬</div><div><h2 id="taskTitle">Misiunea 1: Cere tema</h2><p id="taskText">Ai uitat să notezi tema pentru ora următoare. Scrie-i profesorului de informatică și cere-i să ți-o reamintească.</p><p class="task-hint" id="taskHint">Pont: folosește un salut, formulează clar solicitarea și încheie politicos.</p></div></div>
+        <form id="emailForm">
+          <div class="field"><label for="to">Către</label><input id="to" type="email" placeholder="profesor@exemplu.ro" autocomplete="off"><div class="field-help">Adresă fictivă pentru exercițiu. Poți folosi sugestia misiunii.</div></div>
+          <div class="field"><label for="subject">Subiect</label><input id="subject" type="text" placeholder="Un titlu scurt și clar" autocomplete="off"></div>
+          <div class="field"><label for="message">Mesaj</label><textarea id="message" lang="ro" spellcheck="true" placeholder="Scrie aici e-mailul tău..."></textarea><div class="field-help">Nu uita: salut, mesaj clar, formulă de încheiere și numele tău. Browserul poate sublinia unele greșeli ortografice (dacă are dicționar românesc).</div></div>
+          <div class="actions"><button class="action primary" type="submit">✓ Verifică e-mailul</button><button class="action secondary" type="button" id="exampleBtn">Vezi un exemplu</button><button class="action secondary" type="button" id="clearBtn">Șterge câmpurile</button></div>
+        </form>
+        <div class="feedback" id="feedback" aria-live="polite"><div class="feedback-top"><h3 id="feedbackTitle">Feedback pentru mesajul tău</h3><div class="score" id="score">0 / 5 criterii</div></div><div class="progress"><div id="progressFill"></div></div><div class="checks" id="checks"></div><div class="feedback-note" id="feedbackNote"></div></div>
+        <p class="footer-note">🔒 Acesta este un simulator. Mesajele rămân în această pagină și nu sunt trimise, salvate sau livrate unui destinatar real. Verificarea automată semnalează unele greșeli frecvente, formulări nepotrivite și lipsa unor elemente. Nu este un corector complet și nu înlocuiește recitirea atentă a mesajului.</p>
+      </div>
+    </section>
+  </div>
+</main>
+</div>
+<script>
+const missions = [
+ {title:'Misiunea 1: Cere tema',text:'Ai uitat să notezi tema pentru ora următoare. Scrie-i profesorului de informatică și cere-i să ți-o reamintească.',hint:'Pont: folosește un salut, formulează clar solicitarea și încheie politicos.',to:'profesor@exemplu.ro',subject:'Tema pentru ora următoare',message:'Bună ziua,\n\nVă rog să îmi reamintiți tema pentru următoarea oră de informatică.\n\nVă mulțumesc!\nAlex'},
+ {title:'Misiunea 2: Invită un coleg',text:'Tu și un coleg trebuie să lucrați la un proiect. Scrie-i un e-mail în care îl inviți să vă întâlniți și să stabiliți ce aveți de făcut.',hint:'Pont: precizează motivul mesajului și propune o zi sau o oră.',to:'coleg@exemplu.ro',subject:'Planificarea proiectului',message:'Salut, Mara!\n\nVrei să ne întâlnim miercuri după ore ca să lucrăm la proiectul de informatică? Putem stabili împreună ce are fiecare de făcut.\n\nAștept răspunsul tău!\nAlex'},
+ {title:'Misiunea 3: Trimite o temă',text:'Ai terminat proiectul pentru școală. Scrie-i profesorului un e-mail în care îl anunți că ai finalizat tema și că o vei atașa mesajului.',hint:'Pont: menționează proiectul și amintește de atașament. În acest simulator nu se încarcă fișiere reale.',to:'profesor@exemplu.ro',subject:'Proiectul de informatică',message:'Bună ziua,\n\nAm finalizat proiectul pentru ora de informatică. Vă trimit documentul atașat acestui e-mail.\n\nVă mulțumesc!\nAlex'},
+ {title:'Misiunea 4: Întreabă politicos',text:'Nu ai înțeles o cerință dintr-un exercițiu. Cere-i profesorului o explicație suplimentară, folosind un ton politicos și clar.',hint:'Pont: spune la ce exercițiu te referi și explică ce anume ai vrea să clarifici.',to:'profesor@exemplu.ro',subject:'O întrebare despre exercițiu',message:'Bună ziua,\n\nAș avea o întrebare despre exercițiul 3. Nu am înțeles ultimul pas și v-aș ruga să îmi explicați cum ar trebui să procedez.\n\nVă mulțumesc pentru ajutor!\nAlex'}
+];
+const $ = id => document.getElementById(id);
+let current = 0;
+function selectMission(index) {
+ current = index;
+ document.querySelectorAll('.mission').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.mission) === index));
+ const m = missions[index]; $('taskTitle').textContent = m.title; $('taskText').textContent = m.text; $('taskHint').textContent = m.hint;
+ $('to').value = ''; $('subject').value = ''; $('message').value = ''; $('feedback').classList.remove('show');
+}
+document.querySelectorAll('.mission').forEach(btn => btn.addEventListener('click', () => selectMission(Number(btn.dataset.mission))));
+$('exampleBtn').addEventListener('click', () => { const m = missions[current]; $('to').value=m.to; $('subject').value=m.subject; $('message').value=m.message; $('feedback').classList.remove('show'); });
+$('clearBtn').addEventListener('click', () => { $('to').value=''; $('subject').value=''; $('message').value=''; $('feedback').classList.remove('show'); $('to').focus(); });
+$('emailForm').addEventListener('submit', event => {
+ event.preventDefault();
+ const to = $('to').value.trim(), subject = $('subject').value.trim(), message = $('message').value.trim();
+ const words = message.split(/\s+/).filter(Boolean);
+ const normalized = str => str.toLocaleLowerCase('ro-RO').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ const body = normalized(message);
+ const commonErrors = [
+  [/\b(salutaree|buna ziuaa|buna zia)\b/g,'Verifică formula de salut.'],
+  [/\b(multumesk|multumescq|multumescc|multumesc frmos)\b/g,'Verifică scrierea expresiei „mulțumesc”.'],
+  [/\b(va rog frmos|vroiam sa va intreb daca puteti sa imi)\b/g,'Încearcă o formulare mai clară și mai îngrijită.'],
+  [/\b(temaia|proect|proiectuul|exercitiuul|informatika|profesorr)\b/g,'Verifică ortografia unor cuvinte din mesaj.'],
+  [/\b(nush|nam|dak|k|ms|pls|thx|bn|cf|vb)\b/g,'Evită prescurtările de chat într-un e-mail școlar.']
+ ];
+ const mistakes=[];
+ for(const [pattern,tip] of commonErrors){const found=[...body.matchAll(pattern)].map(x=>x[0]);if(found.length)mistakes.push(`${tip} (${[...new Set(found)].join(', ')})`);}
+ const offensive = [
+  /\b(prost(?:ule|o|i|ilor)?|proasta|idiot(?:ule|o|i)?|idioata|tampit(?:ule|o|i)?|tampita|cretin(?:ule|o|i)?|cretina|fraier(?:ule|o|i)?|fraiera|handicapat(?:ule|o|i)?|handicapata)\b/,
+  /\b(dracu(?:lui)?|naibii|m\s*\*+e|pula|pule|pizda|futu|futui|muie|cacat|rahat)\b/,
+  /\b(taci|dispari|te urasc|esti un nimeni)\b/
+ ];
+ const offensiveFound = offensive.some(re=>re.test(body));
+ const rudeTone = /\b(da-mi|dami|trimite-mi acum|vreau acum|trebuie sa imi dai)\b/.test(body);
+ const relevantTerms = [
+  /\b(tema|temele|lectia|lectiile|de facut|pentru ora)\b/,
+  /\b(proiect|lucram|intalnim|miercuri|joi|vineri|luni|marti|sambata|duminica|ora|echipa)\b/,
+  /\b(proiect|tema|finalizat|terminat|atasat|atasament|document)\b/,
+  /\b(exercitiu|cerinta|explic|inteleg|lamur|intrebare|clarific)\b/
+ ];
+ const relevance = relevantTerms[current].test(body);
+ const beginsWithGreeting = /^\s*(buna ziua|buna seara|salut|stimate|stimata|draga|dragi)\b/.test(body);
+ const hasEnding = /\b(multumesc|cu respect|o zi buna|toate cele bune|astept raspuns|cu drag)\b/.test(body);
+ const checks = [
+  {ok:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to),label:'Adresa destinatarului are un format valid.',tip:'Completează o adresă în formatul nume@exemplu.ro.'},
+  {ok:subject.length >= 5 && /[a-zăâîșț]/i.test(subject),label:'Subiectul este completat și suficient de clar.',tip:'Adaugă un subiect scurt, care spune despre ce este mesajul.'},
+  {ok:beginsWithGreeting,label:'Mesajul începe cu o formulă de salut.',tip:'Începe cu „Bună ziua,” sau „Salut,” în funcție de destinatar.'},
+  {ok:hasEnding,label:'Mesajul include o formulă politicoasă de încheiere.',tip:'Poți încheia cu „Vă mulțumesc!” și apoi numele tău.'},
+  {ok:words.length >= 12,label:'Mesajul este suficient de dezvoltat.',tip:'Scrie cel puțin 12 cuvinte și explică motivul mesajului.'},
+  {ok:relevance,label:'Conținutul are legătură cu misiunea aleasă.',tip:'Precizează explicit tema, proiectul sau exercițiul despre care scrii.'},
+  {ok:mistakes.length===0,label:'Nu au fost identificate greșeli frecvente din lista verificată.',tip:mistakes.length ? mistakes.join(' ') : 'Recitește cu atenție fiecare cuvânt.'},
+  {ok:!offensiveFound && !rudeTone,label:'Limbajul este respectuos, fără expresii ofensatoare identificate.',tip:offensiveFound?'Au fost detectate cuvinte sau expresii nepotrivite. Reformulează respectuos.':'Înlocuiește comenzile bruște cu formule politicoase, precum „Te rog” sau „Vă rog”.'}
+ ];
+ const count = checks.filter(c=>c.ok).length;
+ $('score').textContent = `${count} / ${checks.length} criterii`;
+ $('progressFill').style.width = `${count/checks.length*100}%`;
+ $('feedbackTitle').textContent = count===checks.length ? 'Foarte bine! Toate verificările au fost trecute.' : count>=5 ? 'Ești pe drumul cel bun!' : 'Hai să îmbunătățim mesajul!';
+ $('checks').innerHTML = checks.map(c=>`<div class="check ${c.ok?'ok':'no'}"><span class="check-icon">${c.ok?'✓':'○'}</span><span>${c.ok?c.label:`${c.label} ${c.tip}`}</span></div>`).join('');
+ $('feedbackNote').textContent = count===checks.length ? 'Înainte de a trimite un e-mail real, recitește mesajul, verifică numele destinatarului și asigură-te că ai atașat fișierul dacă ai promis acest lucru.' : 'Citește sugestiile de mai sus, corectează mesajul și verifică-l din nou. Verificarea este orientativă: unele greșeli pot scăpa. Recitește mesajul și asigură-te că răspunde misiunii.';
+ $('feedback').classList.add('show'); $('feedback').scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+</script>
+</body>
+</html>
